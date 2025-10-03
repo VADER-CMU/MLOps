@@ -1,0 +1,3 @@
+[submodule "data_annotation/samat"]
+	path = data_annotation/samat
+	url = https://github.com/Divelix/samat

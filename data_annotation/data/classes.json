@@ -1,0 +1,14 @@
+{
+    "classes": [
+        { "id": 1, "name": "pepper1", "color": "#FFF000" },
+        { "id": 2, "name": "peduncle1", "color": "#4effac" },
+        { "id": 3, "name": "pepper2", "color": "#DED100" },
+        { "id": 4, "name": "peduncle2", "color": "#6effb5" },
+        { "id": 5, "name": "pepper3", "color": "#BEB200" },
+        { "id": 6, "name": "peduncle3", "color": "#87ffbf" },
+        { "id": 7, "name": "pepper4", "color": "#9E9500" },
+        { "id": 8, "name": "peduncle4", "color": "#9cffc8" },
+        { "id": 9, "name": "pepper5", "color": "#807800" },
+        { "id": 10, "name": "peduncle5", "color": "#afffd1" }
+    ]
+}
