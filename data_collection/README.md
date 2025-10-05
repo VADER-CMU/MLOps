@@ -11,7 +11,7 @@ Install docker
 3. Download the camera software using `git clone https://github.com/rjwb1/realsense-ros`
 4. `cd ../` In the `catkin_ws` folder run `catkin_make`. Further, source your setup file using `source devel/setup.bash`
 5. Run the camera node using `roslaunch realsense2_camera rs_camera.launch color_fps:=10 depth_fps:=10`. You may change the FPS
-6. Record the bag file using `rosbag record -o <filename prefix> /camera/color/image_raw /camera/depth/image_rect_raw /camera/color/camera_info /tf /tf_static`
+6. Record the bag file using `rosbag record -o <filename prefix> /camera/color/image_raw /camera/depth/image_rect_raw /camera/color/camera_info /camera/depth/camera_info /tf /tf_static`
 7. You may visualize the feed using `rosrun rqt_image_view rqt_image_view`
 8. Ctrl+C in the rosbag record terminal will save the rosbag
 
