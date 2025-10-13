@@ -8,7 +8,7 @@ Install docker
 
 1. Build and run (`build_docker.sh` and `run_docker.sh`) the VADER Docker container: https://github.com/VADER-CMU/vader_docker
 2. In your `docker_ws` create a catkin workspace `mkdir -p catkin_ws/src` and cd into it `cd catkin_ws/src/`
-3. Download the camera software using `git clone https://github.com/rjwb1/realsense-ros.git`
+3. Download the camera software using `git clone https://github.com/VADER-CMU/realsense-ros.git`
 4. In the docker container run `catkin_make` within the `catkin_ws`. Further, source your setup file using `source devel/setup.bash`
 5. Run the camera node using `roslaunch realsense2_camera rs_camera.launch color_fps:=10 depth_fps:=10`. You may change the FPS
 6. Record the bag file using `rosbag record -o <filename prefix> /camera/color/image_raw /camera/depth/image_rect_raw /camera/color/camera_info /camera/depth/camera_info /tf /tf_static`
