@@ -19,12 +19,20 @@ Install docker
 
 ## How to extract images
 
-Create a `.venv` or a conda env and install `pip install opencv-python rosbags rosbags-image` 
+Create a **Python 11** `.venv` or a conda env and install `pip install opencv-python rosbags rosbags-image` 
 
 Run the extraction script `python image_extracter.py --bag_file <bag filename> --output_dir <output_dir>`
 
 # Annotation
 
-Install SAM in the env using `pip install git+https://github.com/facebookresearch/segment-anything.git`
+Create a **Python 11** `.venv` or a conda env and install SAM in the env using `pip install git+https://github.com/facebookresearch/segment-anything.git`
 
 ## Run SAMAT
+
+1. Do `git submodule update --init --recursive` to init the samat repo
+2. Install SAMAT in the env: run `python -m pip install -e .` in the `samat` folder.
+3. Download SAM VIT_H weights `https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth`
+4. Edit `samat/config.toml` with the dataset (`output_dir`) and path to the weights
+5. In `samat` folder, run `python scripts/preprocess_dataset.py`. This creates the `sam` folder with SAM masks
+6. Run the annotation tool `python .` 
+7. Follow the shortcuts given here: https://github.com/Divelix/samat/tree/9bd13b742accc4d804d962bb07e7ad31cbbd9a8c?tab=readme-ov-file#shortcuts

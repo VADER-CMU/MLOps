@@ -23,7 +23,7 @@ def extract_images_from_rosbag(bag_path, rgb_topic, depth_topic, output_dir):
         output_dir (str): Directory to save extracted images
     """
     # Create output directories
-    rgb_dir = os.path.join(output_dir, 'rgb')
+    rgb_dir = os.path.join(output_dir, 'images')
     depth_dir = os.path.join(output_dir, 'depth')
     os.makedirs(rgb_dir, exist_ok=True)
     os.makedirs(depth_dir, exist_ok=True)
