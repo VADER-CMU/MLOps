@@ -10,6 +10,7 @@ from rosbags.image import message_to_cvimage
 import cv2
 import os
 import argparse
+import shutil
 
 def extract_images_from_rosbag(bag_path, rgb_topic, depth_topic, output_dir):
     """
@@ -116,16 +117,24 @@ def extract_images_from_rosbag(bag_path, rgb_topic, depth_topic, output_dir):
     print(f"RGB images location: {rgb_dir}")
     print(f"Depth images location: {depth_dir}")
 
+    classes_src = 'classes.json'
+    classes_dst = os.path.join(output_dir, 'classes.json')
+    if os.path.exists(classes_src):
+        shutil.copy(classes_src, classes_dst)
+        print(f"Copied {classes_src} to {classes_dst}")
+    else:
+        print(f"File {classes_src} not found, skipping copy.")
+
 def main():
     parser = argparse.ArgumentParser(
         description='Extract RGB and depth images from ROS 1 bag file (no ROS installation required)'
     )
     parser.add_argument('--bag_file', help='Path to the ROS bag file')
-    parser.add_argument('--rgb-topic', default='/camera/color/image_raw',
+    parser.add_argument('--rgb_topic', default='/camera/color/image_raw',
                        help='RGB image topic (default: /camera/color/image_raw)')
-    parser.add_argument('--depth-topic', default='/camera/depth/image_rect_raw',
+    parser.add_argument('--depth_topic', default='/camera/depth/image_rect_raw',
                        help='Depth image topic (default: /camera/depth/image_rect_raw)')
-    parser.add_argument('--output-dir', default='./extracted_images',
+    parser.add_argument('--output_dir', default='./extracted_images',
                        help='Output directory for images (default: ./extracted_images)')
     
     args = parser.parse_args()

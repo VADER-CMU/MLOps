@@ -1,8 +1,10 @@
-# Data collection pipeline
+# Data collection & Annotation pipeline
+
+# Data collection
 
 ROS bag -> Images
 
-# How to collect a ROS bag
+## How to collect a ROS bag
 
 Install docker
 
@@ -15,6 +17,14 @@ Install docker
 7. You may visualize the feed using `rosrun rqt_image_view rqt_image_view`
 8. Ctrl+C in the rosbag record terminal will save the rosbag
 
-# How to extract images
+## How to extract images
 
-Run the extraction script `image_extracter.py --bag_file <bag filename> --output_dir <output_dir>`
+Create a `.venv` or a conda env and install `pip install opencv-python rosbags rosbags-image` 
+
+Run the extraction script `python image_extracter.py --bag_file <bag filename> --output_dir <output_dir>`
+
+# Annotation
+
+Install SAM in the env using `pip install git+https://github.com/facebookresearch/segment-anything.git`
+
+## Run SAMAT
