@@ -147,6 +147,32 @@ def convert_via_to_yolo(json_path, output_dir, image_dir=None):
             normalized_coords = normalize_polygon(
                 all_points_x, all_points_y, img_width, img_height
             )
+            # Calculate polygon area
+            def polygon_area(x_coords, y_coords):
+                """Calculate the area of a polygon using the Shoelace formula"""
+                n = len(x_coords)
+                area = 0.0
+                for i in range(n):
+                    j = (i + 1) % n
+                    area += x_coords[i] * y_coords[j]
+                    area -= y_coords[i] * x_coords[j]
+                area = abs(area) / 2.0
+                return area
+
+            # Calculate relative area (0-1)
+            polygon_rel_area = polygon_area(
+                [x / img_width for x in all_points_x],
+                [y / img_height for y in all_points_y]
+            )
+            print(f"Polygon relative area for {filename}: {polygon_rel_area:.6f}")
+
+            # Set minimum area threshold (adjust as needed)
+            min_area_threshold = 0.007  # 0.01% of image area
+
+            # Skip small polygons
+            if class_id == 0 and polygon_rel_area < min_area_threshold:  # Only for fruit/pepper class
+                print(f"Skipping small fruit annotation in {filename}, area: {polygon_rel_area:.6f}")
+                continue
             
             # Format: class_id x1 y1 x2 y2 ... xn yn
             annotation_line = f"{class_id} " + " ".join(f"{coord:.6f}" for coord in normalized_coords)
@@ -166,7 +192,7 @@ def convert_via_to_yolo(json_path, output_dir, image_dir=None):
     
     print(f"\nConversion complete!")
     print(f"Successfully converted: {converted_count}")
-    print(f"Skipped: {skipped_count}")
+    # print(f"Skipped: {skipped_count}")
     print(f"Output saved to: {output_dir}")
 
 
