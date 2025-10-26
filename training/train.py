@@ -6,6 +6,7 @@ results = model.train(
     data='bup-segmentation.yaml',
     epochs=400,
     imgsz=640,
+    rect=True,
     val=True,
     batch=16,
     single_cls=True,
