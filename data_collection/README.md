@@ -19,13 +19,13 @@ Install docker
 
 ## How to extract images
 
-Create a **Python 11** `.venv` or a conda env and install `pip install opencv-python rosbags rosbags-image` 
+Create a **Python 3.11** `.venv` or a conda env and install `pip install opencv-python rosbags rosbags-image` 
 
 Run the extraction script `python image_extracter.py --bag_file <bag filename> --output_dir <output_dir>`
 
 # Annotation
 
-Create a **Python 11** `.venv` or a conda env and install SAM in the env using `pip install git+https://github.com/facebookresearch/segment-anything.git`
+Use a **Python 3.11** `.venv` or a conda env and install SAM in the env using `pip install git+https://github.com/facebookresearch/segment-anything.git`
 
 ## Run SAMAT
 

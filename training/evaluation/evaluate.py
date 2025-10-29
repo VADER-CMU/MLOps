@@ -30,7 +30,7 @@ def save_comparative_plot(x, y1, y2, xlabel, ylabel, title, legend_labels, outpu
     plt.savefig(output_path)
     plt.close()
 
-def evaluate_segmentation_model(model_path, data_yaml, imgsz=640, batch_size=16, output_dir="evaluation_results"):
+def evaluate_segmentation_model(model_path, data_yaml, imgsz=640, batch_size=16):
     """
     Evaluate a YOLO segmentation model on a given dataset.
     
@@ -43,6 +43,7 @@ def evaluate_segmentation_model(model_path, data_yaml, imgsz=640, batch_size=16,
     model = ultralytics.YOLO(model_path)
     results = model.val(data=data_yaml, split="test")
     inference_times = results.speed
+    output_dir = model_path.replace(".pt", "_evaluation_results")
     os.makedirs(output_dir, exist_ok=True)
     metrics_path = os.path.join(output_dir, "metrics.txt")
 
@@ -145,6 +146,6 @@ def evaluate_segmentation_model(model_path, data_yaml, imgsz=640, batch_size=16,
     print(f"All metrics and plots saved to {output_dir}")
 # Example usage:
 if __name__ == "__main__":
-    model_path = "orientation2.pt"
+    model_path = "yolov8l.pt"
     data_yaml = "data.yaml"
     evaluate_segmentation_model(model_path, data_yaml)
