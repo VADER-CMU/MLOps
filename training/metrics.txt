@@ -1,0 +1,26 @@
+(125, 45912659, 0, 210.0613632)
+
+Inference Time Breakdown (in ms):
+Preprocessing Time: 0.8679 ms
+Inference Time: 26.1776 ms
+Postprocessing Time: 1.8313 ms
+Loss (Model Error): 0.0006
+Total Inference Time: 28.877 ms
+
+Bounding Box Metrics:
+mAP50: 0.78
+mAP50-95: 0.668
+mAP75: 0.779
+
+Segmentation Metrics:
+mAP50: 0.775
+mAP50-95: 0.649
+mAP75: 0.763
+
+Metrics at Max F1-Score:
+Box Max F1-Score: 0.767 at Confidence Threshold: 0.677
+ - Precision: 0.884
+ - Recall: 0.678
+Segmentation Max F1-Score: 0.767 at Confidence Threshold: 0.677
+ - Precision: 0.884
+ - Recall: 0.678

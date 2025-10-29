@@ -1,3 +1,4 @@
+import shutil
 import numpy as np
 import cv2
 import json
@@ -112,7 +113,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     mask_folder = pathlib.Path(args.masks_folder)
-    output_folder = pathlib.Path(args.masks_folder).parent / "yolo_annotations"
+    output_folder = pathlib.Path(args.masks_folder).parent / "yolo_dataset"
     output_folder.mkdir(parents=True, exist_ok=True)
     mask_files = list(mask_folder.glob("*.png"))
     for mask_file in tqdm(mask_files, desc="Processing masks"):
@@ -123,6 +124,9 @@ if __name__ == "__main__":
         with open(output_file, 'w') as f:
             f.write(yolo_annotations)
 
-
-
-
+    
+    # copy images from images_folder to output_folder
+    images_folder = mask_folder.parent / "images"
+    image_files = list(images_folder.glob("*.png"))
+    for image_file in tqdm(image_files, desc="Copying images"):
+        shutil.copy(image_file, output_folder / image_file.name)
