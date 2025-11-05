@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-PEDUNCLE_IMGE_SIZE = 640
+PEDUNCLE_IMAGE_SIZE = 640
 
 def extract_peduncle_roi(image, yolo_annotations):
     height = image.shape[0]
@@ -17,7 +17,9 @@ def extract_peduncle_roi(image, yolo_annotations):
     fruit_poly = []
     peduncle_poly = []
     cropped_image = None
-    new_annotation_line = ""
+
+    cropped_images = []
+    annotations = []
 
     for line in yolo_annotations.split("\n"):
         # y = np.array(line.split(" ")[1:]).astype(np.float32)
@@ -28,7 +30,9 @@ def extract_peduncle_roi(image, yolo_annotations):
             peduncle_y = np.array(line.split(" ")[1:]).astype(np.float32)
             peduncle_poly.append(peduncle_y)
 
-    for poly in fruit_poly[0:1]:
+    
+
+    for poly in fruit_poly:
         x_coords = poly.reshape((-1,2))[:, 0] * width
         y_coords = poly.reshape((-1,2))[:, 1] * height
 
@@ -46,7 +50,7 @@ def extract_peduncle_roi(image, yolo_annotations):
 
         cropped_image = image[roi_y_min:roi_y_max, roi_x_min:roi_x_max, :]
         
-        cropped_image = (cv2.resize(cropped_image, (PEDUNCLE_IMGE_SIZE, PEDUNCLE_IMGE_SIZE))*255).astype(np.uint8)
+        cropped_image = (cv2.resize(cropped_image, (PEDUNCLE_IMAGE_SIZE, PEDUNCLE_IMAGE_SIZE))*255).astype(np.uint8)
         roi_peduncle_poly = None
 
         for poly in peduncle_poly:
@@ -56,6 +60,7 @@ def extract_peduncle_roi(image, yolo_annotations):
                 scaled_poly[:, 1].min() >= roi_y_min and scaled_poly[:, 1].max() <= roi_y_max):
 
                 roi_peduncle_poly = scaled_poly
+                break
 
         new_annotation = []
         if roi_peduncle_poly is not None:
@@ -66,12 +71,15 @@ def extract_peduncle_roi(image, yolo_annotations):
                 
                 # Add to YOLO line
                 new_annotation.append(f"{x_norm:.6f} {y_norm:.6f}")
+
         else:
-            return None, None
+            continue  # No peduncle in this ROI, skip to next fruit
 
         new_annotation_line = "0 " + " ".join(new_annotation)
+        annotations.append(new_annotation_line)
+        cropped_images.append(cropped_image)
 
-    return cropped_image, new_annotation_line
+    return cropped_images, annotations
 
 
 if __name__ == "__main__":
@@ -115,22 +123,22 @@ if __name__ == "__main__":
 
         yolo_annotations = open(annotation_path).read()
 
-        cropped_image, new_annotation_line = extract_peduncle_roi(image, yolo_annotations)
+        cropped_images, annotation_lines = extract_peduncle_roi(image, yolo_annotations)
 
-        if cropped_image is not None:
-            
+
+        for cropped_image, annotation_line in zip(cropped_images, annotation_lines):
 
             # save cropped image and new annotation with randomized names
             rand_name = f"peduncle_{counter}"
             counter += 1
             cv2.imwrite(str(output_dir / f'{rand_name}.png'), cv2.cvtColor(cropped_image, cv2.COLOR_RGB2BGR))  # convert RGB to BGR for cv2
             with open(output_dir / f'{rand_name}.txt', 'w') as f:
-                f.write(new_annotation_line)
+                f.write(annotation_line)
             fig, ax = plt.subplots(figsize=(10,10))
             ax.imshow(cropped_image)
             roi_peduncle_poly = []
 
-            for line in new_annotation_line.split("\n"):
+            for line in annotation_line.split("\n"):
             # y = np.array(line.split(" ")[1:]).astype(np.float32)
                 if line.split(" ")[0] == '0':
                     roi_peduncle_y = np.array(line.split(" ")[1:]).astype(np.float32)
