@@ -23,6 +23,14 @@ Create a **Python 3.11** `.venv` or a conda env and install `pip install opencv-
 
 Run the extraction script `python image_extracter.py --bag_file <bag filename> --output_dir <output_dir>`
 
+# Data collection (Option 2)
+
+Use `collect_data.py` to collect data. Requirements: `numpy opencv-python pyrealsense2 json pathlib`
+
+```bash
+python collect_data.py
+```
+
 # Annotation
 
 Use a **Python 3.11** `.venv` or a conda env and install SAM in the env using `pip install git+https://github.com/facebookresearch/segment-anything.git`
