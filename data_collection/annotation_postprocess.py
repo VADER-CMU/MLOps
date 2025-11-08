@@ -36,8 +36,6 @@ def mask_to_yolo_format(mask, classes_json_path="classes.json", group_by_type=Tr
             # Group by type: peppers = 0, peduncles = 1
             if 'pepper' in cls['name'].lower():
                 color_to_class[rgb] = 0
-            # elif 'peduncle' in cls['name'].lower():
-            #     color_to_class[rgb] = 1
         else:
             color_to_class[rgb] = cls['id'] - 1  # Convert to 0-indexed for YOLO
     
