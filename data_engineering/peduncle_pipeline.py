@@ -14,6 +14,7 @@ import albumentations as A
 import numpy as np
 from glob import glob
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 PEDUNCLE_IMAGE_SIZE = 640
 
@@ -98,11 +99,11 @@ def create_train_augmentation_pipeline():
         # Apply random rotation up to 45 degrees
         A.HorizontalFlip(p=0.5),
         # Always rotate by 90 degrees
-        A.VerticalFlip(p=0.3),
-        A.Rotate(limit=(90, 90), p=1.0),
+        A.VerticalFlip(p=0.5),
+        A.Rotate(limit=(90, 90), p=0.8),
         
 
-        A.Rotate(limit=40, p=0.3),  # p=1.0 ensures rotation is always applied[3]
+        # A.Rotate(limit=40, p=0.3),  # p=1.0 ensures rotation is always applied[3]
         A.Affine(scale=(1, 1.1), p=0.3 ),
         A.RandomBrightnessContrast(
         brightness_limit=0.3,     # Handle darker/brighter conditions
@@ -110,10 +111,18 @@ def create_train_augmentation_pipeline():
         p=0.4
     ),
     A.RandomGamma(
-        gamma_limit=(70, 130),    # Gamma correction for different exposures
+        gamma_limit=(70, 110),    # Gamma correction for different exposures
         p=0.4
     ),
 
+    ])
+    return transform
+
+def create_val_augmentation_pipeline():
+    transform = A.Compose([
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
+        A.Rotate(limit=(90, 90), p=0.8),
     ])
     return transform
 
@@ -194,6 +203,152 @@ def mask_to_yolo_format(mask):
 
     return yolo_string
 
+def shuffle_split():
+    yolo_annotations_raw = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/peduncle_mega/raw")
+
+    # Create a list of all image files
+    image_files = list(Path(yolo_annotations_raw).glob("*.png"))
+
+    total_images = len(image_files)
+
+    # print(len(image_files)) #1080
+    # Shuffle the image files
+    random.shuffle(image_files)
+
+    # Split into train, validation, and test sets
+    valid_files = image_files[0:total_images//5]
+    train_files = image_files[total_images//5:]
+
+    # Define output directories
+    train_dir = "train"
+    valid_dir = "valid"
+
+    # Create directories if they don't exist
+    Path(train_dir).mkdir(parents=True, exist_ok=True)
+    Path(valid_dir).mkdir(parents=True, exist_ok=True)
+
+    # copy the files from raw/images into correspoding train valid and test folders. Move the masks too
+
+    for file_set, output_dir in zip(
+        [train_files, valid_files],
+        [train_dir, valid_dir]
+    ):
+        for file_path in file_set:
+            # Copy image file
+            dest_image_path = Path(output_dir) / file_path.name
+            copy(file_path, dest_image_path)
+
+            # Copy corresponding mask file
+            mask_file_path = file_path.with_suffix('.txt')
+            if mask_file_path.exists():
+                copy(mask_file_path, dest_image_path.with_suffix('.txt'))
+
+
+def run_augmentation(visualize=False):
+    peduncle_mega = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/peduncle_mega/train_raw")
+    peduncle_mega_train = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/peduncle_mega/train")
+    img_list = list(peduncle_mega.glob("*.png"))
+
+    num_augmentations = 5
+
+    for img_path in tqdm(img_list):
+        # Load image
+        image = cv2.imread(str(img_path))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Read annotations
+        annotations = extract_annotations(str(img_path.with_suffix('.txt')))
+
+
+        for i in range(num_augmentations):
+            transform = create_train_augmentation_pipeline()
+
+            # Apply augmentation
+            transformed = transform(image=image, masks=[yolo_to_mask(annotations, image.shape)])
+
+            aug_image = transformed['image']
+            aug_mask = transformed['masks'][0]
+
+            # Save augmented images and masks
+            cv2.imwrite(str(peduncle_mega_train / f"{img_path.stem}_aug_{i}.png"), cv2.cvtColor(aug_image, cv2.COLOR_RGB2BGR))
+            with open(peduncle_mega_train / f"{img_path.stem}_aug_{i}.txt", 'w') as f:
+                f.write(mask_to_yolo_format(aug_mask))
+            # print(f"Saved: {img_path.stem}")
+            # Visualize transformed image
+            if visualize:
+                fig, ax = plt.subplots(figsize=(10,10))
+                ax.imshow(aug_image)
+
+                annotation_line = mask_to_yolo_format(aug_mask)
+                roi_peduncle_poly = []
+
+                for line in annotation_line.split("\n"):
+                # y = np.array(line.split(" ")[1:]).astype(np.float32)
+                    if line.split(" ")[0] == '0':
+                        roi_peduncle_y = np.array(line.split(" ")[1:]).astype(np.float32)
+                        roi_peduncle_poly.append(roi_peduncle_y)
+
+                for poly in roi_peduncle_poly:
+                    scaled_poly = poly.reshape((-1,2)) * aug_image.shape[0:2][::-1]
+                    p = Polygon(scaled_poly, facecolor = 'green', edgecolor = 'g',  fill = True, alpha=0.5)
+
+                    ax.add_patch(p)
+
+                plt.savefig(f"{peduncle_mega.parent}/augmented_images/{img_path.stem}_aug_{i}.png")
+                plt.close()
+
+def run_val_augmentation(visualize=False):
+    peduncle_mega = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/peduncle_mega/valid_raw")
+    peduncle_mega_val = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/peduncle_mega/valid")
+    img_list = list(peduncle_mega.glob("*.png"))
+
+    num_augmentations = 2
+
+    for img_path in tqdm(img_list):
+        # Load image
+        image = cv2.imread(str(img_path))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Read annotations
+        annotations = extract_annotations(str(img_path.with_suffix('.txt')))
+
+
+        for i in range(num_augmentations):
+            transform = create_val_augmentation_pipeline()
+
+            # Apply augmentation
+            transformed = transform(image=image, masks=[yolo_to_mask(annotations, image.shape)])
+
+            aug_image = transformed['image']
+            aug_mask = transformed['masks'][0]
+
+            # Save augmented images and masks
+            cv2.imwrite(str(peduncle_mega_val / f"{img_path.stem}_aug_{i}.png"), cv2.cvtColor(aug_image, cv2.COLOR_RGB2BGR))
+            with open(peduncle_mega_val / f"{img_path.stem}_aug_{i}.txt", 'w') as f:
+                f.write(mask_to_yolo_format(aug_mask))
+            # print(f"Saved: {img_path.stem}")
+            # Visualize transformed image
+            if visualize:
+                fig, ax = plt.subplots(figsize=(10,10))
+                ax.imshow(aug_image)
+
+                annotation_line = mask_to_yolo_format(aug_mask)
+                roi_peduncle_poly = []
+
+                for line in annotation_line.split("\n"):
+                # y = np.array(line.split(" ")[1:]).astype(np.float32)
+                    if line.split(" ")[0] == '0':
+                        roi_peduncle_y = np.array(line.split(" ")[1:]).astype(np.float32)
+                        roi_peduncle_poly.append(roi_peduncle_y)
+
+                for poly in roi_peduncle_poly:
+                    scaled_poly = poly.reshape((-1,2)) * aug_image.shape[0:2][::-1]
+                    p = Polygon(scaled_poly, facecolor = 'green', edgecolor = 'g',  fill = True, alpha=0.5)
+
+                    ax.add_patch(p)
+
+                plt.savefig(f"{peduncle_mega.parent}/augmented_images/{img_path.stem}_aug_{i}.png")
+                plt.close()
 
 
 if __name__ == "__main__":
@@ -280,52 +435,7 @@ if __name__ == "__main__":
     #         label_path = img_path.with_suffix('.txt')
     #         shutil.copy(label_path, peduncle_mega / label_path.name)
 
-    peduncle_mega = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/peduncle_mega/train_raw")
-    peduncle_mega_train = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/peduncle_mega/train")
-    img_list = list(peduncle_mega.glob("*.png"))
-
-    num_augmentations = 5
-
-    for img_path in img_list:
-        # Load image
-        image = cv2.imread(str(img_path))
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        # Read annotations
-        annotations = extract_annotations(str(img_path.with_suffix('.txt')))
-
-        for i in range(num_augmentations):
-            transform = create_train_augmentation_pipeline()
-
-            # Apply augmentation
-            transformed = transform(image=image, masks=[yolo_to_mask(annotations, image.shape)])
-
-            aug_image = transformed['image']
-            aug_mask = transformed['masks'][0]
-
-            # Save augmented images and masks
-            cv2.imwrite(str(peduncle_mega_train / f"{img_path.stem}_aug_{i}.png"), cv2.cvtColor(aug_image, cv2.COLOR_RGB2BGR))
-            with open(peduncle_mega_train / f"{img_path.stem}_aug_{i}.txt", 'w') as f:
-                f.write(mask_to_yolo_format(aug_mask))
-            # print(f"Saved: {img_path.stem}")
-            # # Visualize transformed image
-            # fig, ax = plt.subplots(figsize=(10,10))
-            # ax.imshow(aug_image)
-
-            # annotation_line = mask_to_yolo_format(aug_mask)
-            # roi_peduncle_poly = []
-
-            # for line in annotation_line.split("\n"):
-            # # y = np.array(line.split(" ")[1:]).astype(np.float32)
-            #     if line.split(" ")[0] == '0':
-            #         roi_peduncle_y = np.array(line.split(" ")[1:]).astype(np.float32)
-            #         roi_peduncle_poly.append(roi_peduncle_y)
-
-            # for poly in roi_peduncle_poly:
-            #     scaled_poly = poly.reshape((-1,2)) * aug_image.shape[0:2][::-1]
-            #     p = Polygon(scaled_poly, facecolor = 'green', edgecolor = 'g',  fill = True, alpha=0.5)
-
-            #     ax.add_patch(p)
-
-            # plt.show()
-            # plt.close()
+    # shuffle_split()
+    # run_augmentation()
+    run_val_augmentation()
+   

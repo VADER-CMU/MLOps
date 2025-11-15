@@ -145,18 +145,20 @@ def extract_cropped_regions(xml_path, image_path):
 
     # Get dimensions for a reasonable plot size
     height, width, _ = image.shape
+
+    crop_fraction = 0.4
     
     cropped_images = []
     # --- Draw boxes using plt.Rectangle ---
     for box in boxes_to_extract:
         xmin, ymin, xmax, ymax = box
 
-        max_size = max(xmax - xmin, ymax - ymin)
+        max_size = max(xmax - xmin, ymax - ymin) * crop_fraction
 
-        roi_y_min = max(0, (ymin - max_size//2))
-        roi_y_max = min(height, (ymax + max_size//2))
-        roi_x_min = max(0, (xmin - max_size//2))
-        roi_x_max = min(width, (xmax + max_size//2))
+        roi_y_min = int(max(0, (ymin - max_size//2)))
+        roi_y_max = int(min(height, (ymax + max_size//2)))
+        roi_x_min = int(max(0, (xmin - max_size//2)))
+        roi_x_max = int(min(width, (xmax + max_size//2)))
 
         cropped_image = image[roi_y_min:roi_y_max, roi_x_min:roi_x_max, :]
         
@@ -195,27 +197,27 @@ def create_train_augmentation_pipeline():
 
 
 if __name__ == "__main__":
-    # xml_file = "annotations.xml"
-    # xml_path = pathlib.Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/QHDP_2020/train/2017_07_30_row1a_1501399080022352104__realsense_rgb_image_raw.xml")
-    # xml_file = str(xml_path)
+    xml_file = "annotations.xml"
+    xml_path = pathlib.Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/Peduncle_QHDP/train/peduncle_imgs/2017_07_30_row2a_1501398246990396216__realsense_rgb_image_raw.xml")
+    xml_file = str(xml_path)
 
-    # tree = ET.parse(xml_file)
-    # root = tree.getroot()
-    # image_name_from_xml = xml_path.parent / root.find('filename').text
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+    image_name_from_xml = xml_path.parent / root.find('filename').text
 
-    # image_file = image_name_from_xml
+    image_file = image_name_from_xml
 
     # img = cv2.imread(str(image_file))
     # fig, ax = plt.subplots(figsize=(10,10))
     # ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     # plt.show()
 
-    # cropped_regions = extract_cropped_regions(xml_file, image_file)
+    cropped_regions = extract_cropped_regions(xml_file, image_file)
 
-    # for img in cropped_regions:
-    #     fig, ax = plt.subplots(figsize=(10,10))
-    #     ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    #     plt.show()
+    for img in cropped_regions:
+        fig, ax = plt.subplots(figsize=(10,10))
+        ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        plt.show()
 
     # peduncle_folder = pathlib.Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/Peduncle_QHDP/train/peduncle_imgs")
     # cropped_folder = pathlib.Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/Peduncle_QHDP/train/cropped_imgs")
@@ -234,58 +236,58 @@ if __name__ == "__main__":
     #     for img in cropped_regions:
     #         cv2.imwrite(os.path.join(cropped_folder, os.path.basename(xml_file).replace('.xml', f'_peduncle{counter}.png')), img)
     #         counter += 1
-    qhdp_images = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/Peduncle_QHDP/train/cropped_imgs/images")
-    qhdp_masks = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/Peduncle_QHDP/train/cropped_imgs/labels")
-    peduncle_mega_val = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/peduncle_mega/val")
-    img_list = list(qhdp_images.glob("*.png"))
+    # qhdp_images = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/Peduncle_QHDP/train/cropped_imgs/images")
+    # qhdp_masks = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/Peduncle_QHDP/train/cropped_imgs/labels")
+    # peduncle_yolo = Path("/home/kshitij/Documents/Bell Pepper/dataset-collection/qhdp2020/Peduncle_QHDP/train/cropped_imgs/yolo_annotations")
+    # img_list = list(qhdp_images.glob("*.png"))
 
-    num_augmentations = 3
+    # num_augmentations = 3
 
-    for img_path in tqdm(img_list, desc="Processing images"):
-        # Load image
-        image = cv2.imread(str(img_path))
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        mask = cv2.imread(str(qhdp_masks / img_path.stem)+'.png', cv2.IMREAD_UNCHANGED)
-        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
+    # for img_path in tqdm(img_list, desc="Processing images"):
+    #     # Load image
+    #     image = cv2.imread(str(img_path))
+    #     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #     mask = cv2.imread(str(qhdp_masks / img_path.stem)+'.png', cv2.IMREAD_UNCHANGED)
+    #     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
 
-        for i in range(num_augmentations):
-            transform = create_train_augmentation_pipeline()
+    #     # for i in range(num_augmentations):
+    #     #     transform = create_train_augmentation_pipeline()
 
-            transformed = transform(image=image, masks=[mask])
+    #     #     transformed = transform(image=image, masks=[mask])
 
-            aug_image = transformed['image']
-            aug_mask = transformed['masks'][0]
+    #     #     aug_image = transformed['image']
+    #     #     aug_mask = transformed['masks'][0]
 
-            # # Save augmented images and masks
-            # 
-            annotations = mask_to_yolo_format(aug_mask, classes_json_path=str(qhdp_images.parent / "classes.json"))
-            if annotations is None:
-                break
-            with open(peduncle_mega_val / f"{img_path.stem}_aug_{i}.txt", 'w') as f:
-                f.write(annotations)
-            cv2.imwrite(str(peduncle_mega_val / f"{img_path.stem}_aug_{i}.png"), cv2.cvtColor(aug_image, cv2.COLOR_RGB2BGR))
+    #     #     # # Save augmented images and masks
+    #     #     # 
+    #     annotations = mask_to_yolo_format(mask, classes_json_path=str(qhdp_images.parent / "classes.json"))
+    #     if annotations is None:
+    #         continue
+    #     with open(peduncle_yolo / f"{img_path.stem}.txt", 'w') as f:
+    #         f.write(annotations)
+    #     cv2.imwrite(str(peduncle_yolo / f"{img_path.stem}.png"), cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
 
-            # Visualize transformed image
-            # fig, ax = plt.subplots(figsize=(10,10))
-            # ax.imshow(aug_image)
+        # # Visualize transformed image
+        # fig, ax = plt.subplots(figsize=(10,10))
+        # ax.imshow(image)
 
-            
-            # roi_peduncle_poly = []
+        
+        # roi_peduncle_poly = []
 
-            # if annotations is None:
-            #     continue
-            # for line in annotations.split('\n'):
-            #     y = np.array(line.split(" ")[1:]).astype(np.float32)
-            #     if line.split(" ")[0] == '0':
-            #         roi_peduncle_y = np.array(line.split(" ")[1:]).astype(np.float32)
-            #         roi_peduncle_poly.append(roi_peduncle_y)
+        # if annotations is None:
+        #     continue
+        # for line in annotations.split('\n'):
+        #     y = np.array(line.split(" ")[1:]).astype(np.float32)
+        #     if line.split(" ")[0] == '0':
+        #         roi_peduncle_y = np.array(line.split(" ")[1:]).astype(np.float32)
+        #         roi_peduncle_poly.append(roi_peduncle_y)
 
-            # for poly in roi_peduncle_poly:
-            #     scaled_poly = poly.reshape((-1,2)) * aug_image.shape[0:2][::-1]
-            #     p = patches.Polygon(scaled_poly, facecolor = 'green', edgecolor = 'g',  fill = True, alpha=0.5)
+        # for poly in roi_peduncle_poly:
+        #     scaled_poly = poly.reshape((-1,2)) * image.shape[0:2][::-1]
+        #     p = patches.Polygon(scaled_poly, facecolor = 'green', edgecolor = 'g',  fill = True, alpha=0.5)
 
-            #     ax.add_patch(p)
+        #     ax.add_patch(p)
 
-            # plt.show()
-            # plt.close()
+        # plt.show()
+        # plt.close()
 
